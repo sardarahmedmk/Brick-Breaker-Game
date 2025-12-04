@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.name }} - E-Commerce Store</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">{{ translations.get('store_name', 'E-Store') }}</div>
+            <div class="nav-center">
+                <a href="/?lang={{ lang }}&currency={{ currency }}">{{ translations.get('home', 'Home') }}</a>
+                <a href="/?lang={{ lang }}&currency={{ currency }}#products">{{ translations.get('products', 'Products') }}</a>
+                <a href="/cart?lang={{ lang }}&currency={{ currency }}">{{ translations.get('cart', 'Cart') }}</a>
+                <a href="/orders?lang={{ lang }}&currency={{ currency }}">{{ translations.get('my_orders', 'My Orders') }}</a>
+            </div>
+            <div class="nav-right">
+                <select id="langSelect" onchange="changeLanguage(this.value)">
+                    <option value="en" {% if lang == 'en' %}selected="selected"{% endif %}>English</option>
+                    <option value="ur" {% if lang == 'ur' %}selected="selected"{% endif %}>اردو</option>
+                </select>
+                <select id="currencySelect" onchange="changeCurrency(this.value)">
+                    <option value="USD" {% if currency == 'USD' %}selected="selected"{% endif %}>USD</option>
+                    <option value="EUR" {% if currency == 'EUR' %}selected="selected"{% endif %}>EUR</option>
+                    <option value="GBP" {% if currency == 'GBP' %}selected="selected"{% endif %}>GBP</option>
+                    <option value="PKR" {% if currency == 'PKR' %}selected="selected"{% endif %}>PKR</option>
+                    <option value="INR" {% if currency == 'INR' %}selected="selected"{% endif %}>INR</option>
+                </select>
+                <a href="/cart?lang={{ lang }}&currency={{ currency }}" class="cart-icon">🛒 <span id="cartCount">0</span></a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="breadcrumb">
+            <a href="/?lang={{ lang }}&currency={{ currency }}">{{ translations.get('home', 'Home') }}</a>
+            <span> > </span>
+            <span>{{ product.name }}</span>
+        </div>
+
+        <div class="product-detail">
+            <div class="product-image-large">
+                <img src="{{ url_for('static', filename='images/' + product.image) }}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;">
+            </div>
+            <div class="product-details">
+                <h1>{{ product.name }}</h1>
+                
+                <div class="rating-section">
+                    <span class="stars">⭐ {{ product.rating }}/5</span>
+                    <span class="reviews">{{ product.reviews }} {{ translations.get('customer_reviews', 'customer reviews') }}</span>
+                </div>
+
+                <div class="category">
+                    <strong>{{ translations.get('category', 'Category') }}:</strong> {{ product.category }}
+                </div>
+
+                <div class="price-large">
+                    <h2>{{ currency }} {{ "%.2f"|format(product.price) }}</h2>
+                </div>
+
+                <p class="description-full">{{ product.description }}</p>
+
+                <div class="quantity-selector">
+                    <label>{{ translations.get('quantity', 'Quantity') }}:</label>
+                    <input type="number" id="quantity" value="1" min="1" max="100">
+                </div>
+
+                <button class="btn-buy" onclick="addToCartDetail({{ product.id }}, '{{ product.name }}', {{ product.price }}, '{{ lang }}', '{{ currency }}')">
+                    {{ translations.get('add_to_cart', 'Add to Cart') }}
+                </button>
+
+                <div class="product-features">
+                    <h3>{{ translations.get('features', 'Features') }}:</h3>
+                    <ul>
+                        <li>✓ {{ translations.get('fast_shipping', 'Fast Shipping') }}</li>
+                        <li>✓ {{ translations.get('secure_payment', 'Secure Payment') }}</li>
+                        <li>✓ {{ translations.get('easy_return', 'Easy Return Policy') }}</li>
+                        <li>✓ {{ translations.get('warranty', '1 Year Warranty') }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 E-Commerce Store. {{ translations.get('all_rights', 'All Rights Reserved') }}</p>
+        </div>
+    </footer>
+
+    <script>
+        function changeLanguage(lang) {
+            window.location.href = `/product/{{ product.id }}?lang=${lang}&currency={{ currency }}`;
+        }
+
+        function changeCurrency(currency) {
+            window.location.href = `/product/{{ product.id }}?lang={{ lang }}&currency=${currency}`;
+        }
+
+        function addToCartDetail(id, name, price) {
+            const quantity = parseInt(document.getElementById('quantity').value);
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let item = cart.find(p => p.id === id);
+            
+            if (item) {
+                item.quantity += quantity;
+            } else {
+                cart.push({ id, name, price, quantity });
+            }
+            
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            alert('{{ translations.get("item_added", "Item added to cart!") }}');
+            window.location.href = `/cart?lang={{ lang }}&currency={{ currency }}`;
+        }
+
+        function updateCartCount() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let count = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cartCount').textContent = count;
+        }
+
+        updateCartCount();
+    </script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "name": "Wireless Headphones",
+    "price": 79.99,
+    "description": "High-quality wireless headphones with noise cancellation",
+    "category": "Electronics",
+    "image": "headphones.jpg",
+    "rating": 4.5,
+    "reviews": 245
+  },
+  {
+    "id": 2,
+    "name": "USB-C Cable",
+    "price": 12.99,
+    "description": "Durable USB-C charging cable, 2 meters long",
+    "category": "Accessories",
+    "image": "usb-cable.jpg",
+    "rating": 4.8,
+    "reviews": 512
+  },
+  {
+    "id": 3,
+    "name": "Phone Stand",
+    "price": 19.99,
+    "description": "Adjustable phone stand for desk, compatible with all phones",
+    "category": "Accessories",
+    "image": "phone-stand.jpg",
+    "rating": 4.3,
+    "reviews": 189
+  },
+  {
+    "id": 4,
+    "name": "Portable Power Bank",
+    "price": 34.99,
+    "description": "20000mAh portable power bank with fast charging",
+    "category": "Electronics",
+    "image": "power-bank.jpg",
+    "rating": 4.6,
+    "reviews": 378
+  },
+  {
+    "id": 5,
+    "name": "Screen Protector",
+    "price": 9.99,
+    "description": "Tempered glass screen protector for smartphones",
+    "category": "Accessories",
+    "image": "screen-protector.jpg",
+    "rating": 4.4,
+    "reviews": 621
+  },
+  {
+    "id": 6,
+    "name": "Bluetooth Speaker",
+    "price": 49.99,
+    "description": "Portable Bluetooth speaker with 12-hour battery life",
+    "category": "Electronics",
+    "image": "speaker.jpg",
+    "rating": 4.7,
+    "reviews": 456
+  }
+]

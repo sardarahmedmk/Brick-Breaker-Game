@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ translations.get('my_orders', 'My Orders') }} - TechHub Pro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">{{ translations.get('store_name', '✨ TechHub Pro') }}</div>
+            <div class="nav-center">
+                <a href="/?lang={{ lang }}&currency={{ currency }}">{{ translations.get('home', 'Home') }}</a>
+                <a href="/?lang={{ lang }}&currency={{ currency }}#products">{{ translations.get('products', 'Products') }}</a>
+                <a href="/cart?lang={{ lang }}&currency={{ currency }}">{{ translations.get('cart', 'Cart') }}</a>
+                <a href="/orders?lang={{ lang }}&currency={{ currency }}" style="color: #fff; font-weight: bold;">{{ translations.get('my_orders', 'My Orders') }}</a>
+            </div>
+            <div class="nav-right">
+                <select id="langSelect" onchange="changeLanguage(this.value)">
+                    <option value="en" {% if lang == 'en' %}selected="selected"{% endif %}>English</option>
+                    <option value="ur" {% if lang == 'ur' %}selected="selected"{% endif %}>اردو</option>
+                </select>
+                <select id="currencySelect" onchange="changeCurrency(this.value)">
+                    <option value="USD" {% if currency == 'USD' %}selected="selected"{% endif %}>USD</option>
+                    <option value="EUR" {% if currency == 'EUR' %}selected="selected"{% endif %}>EUR</option>
+                    <option value="GBP" {% if currency == 'GBP' %}selected="selected"{% endif %}>GBP</option>
+                    <option value="PKR" {% if currency == 'PKR' %}selected="selected"{% endif %}>PKR</option>
+                    <option value="INR" {% if currency == 'INR' %}selected="selected"{% endif %}>INR</option>
+                </select>
+                <a href="/cart?lang={{ lang }}&currency={{ currency }}" class="cart-icon">🛒 <span id="cartCount">0</span></a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1 style="margin: 2rem 0; text-align: center;">{{ translations.get('my_orders', 'My Orders') }}</h1>
+
+        <div id="ordersContainer">
+            <!-- Orders will be loaded here by JavaScript -->
+        </div>
+
+        <div id="noOrders" style="text-align: center; padding: 3rem; background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08);">
+            <h2>{{ translations.get('no_orders', 'No Orders Yet') }}</h2>
+            <p style="color: #666; margin: 1rem 0;">{{ translations.get('start_shopping', 'Start shopping to see your orders here') }}</p>
+            <a href="/?lang={{ lang }}&currency={{ currency }}" class="btn-continue">{{ translations.get('start_shopping_btn', 'Start Shopping') }}</a>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 TechHub Pro. {{ translations.get('all_rights', '© 2025 TechHub Pro. All Rights Reserved | Premium Tech Solutions') }}</p>
+        </div>
+    </footer>
+
+    <style>
+        .order-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .order-id {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .order-date {
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .order-status {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-processing {
+            background-color: #cfe2ff;
+            color: #084298;
+        }
+
+        .status-shipped {
+            background-color: #cff4fc;
+            color: #055160;
+        }
+
+        .status-delivered {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .status-cancelled {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+
+        .timeline {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .timeline-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .timeline-dot {
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .timeline-dot.completed {
+            background: #28a745;
+        }
+
+        .timeline-content {
+            flex: 1;
+            padding-top: 0.3rem;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .timeline-description {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.3rem;
+        }
+
+        .order-items {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: #f5f7fa;
+            border-radius: 10px;
+        }
+
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .order-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-name {
+            font-weight: 500;
+        }
+
+        .item-qty {
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .item-price {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .order-total {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid #ddd;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .track-button {
+            background-color: #667eea;
+            color: white;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        .track-button:hover {
+            background-color: #764ba2;
+        }
+    </style>
+
+    <script>
+        const currency = '{{ currency }}';
+        const lang = '{{ lang }}';
+
+        function changeLanguage(lang) {
+            window.location.href = `/orders?lang=${lang}&currency=${currency}`;
+        }
+
+        function changeCurrency(curr) {
+            window.location.href = `/orders?lang=${lang}&currency=${curr}`;
+        }
+
+        function loadOrders() {
+            let orders = JSON.parse(localStorage.getItem('orders')) || [];
+            const ordersContainer = document.getElementById('ordersContainer');
+            const noOrders = document.getElementById('noOrders');
+
+            if (orders.length === 0) {
+                ordersContainer.style.display = 'none';
+                noOrders.style.display = 'block';
+                return;
+            }
+
+            noOrders.style.display = 'none';
+            ordersContainer.innerHTML = '';
+
+            // Display orders in reverse (newest first)
+            orders.reverse().forEach((order, index) => {
+                const orderDate = new Date(order.date).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                const statusStages = ['pending', 'processing', 'shipped', 'delivered'];
+                const currentStageIndex = order.stage || 0;
+
+                let statusHTML = '<div class="timeline">';
+                
+                statusStages.forEach((stage, i) => {
+                    const isCompleted = i <= currentStageIndex;
+                    const stageLabels = {
+                        pending: { en: 'Order Placed', ur: 'آرڈر دیا گیا' },
+                        processing: { en: 'Processing', ur: 'پروسیسنگ' },
+                        shipped: { en: 'Shipped', ur: 'بھیجا گیا' },
+                        delivered: { en: 'Delivered', ur: 'پہنچایا گیا' }
+                    };
+
+                    const stageTimes = {
+                        pending: '{{ translations.get("order_placed", "Order Placed") }}',
+                        processing: '{{ translations.get("processing", "Processing") }}',
+                        shipped: '{{ translations.get("shipped", "Shipped") }}',
+                        delivered: '{{ translations.get("delivered", "Delivered") }}'
+                    };
+
+                    statusHTML += `
+                        <div class="timeline-item">
+                            <div class="timeline-dot ${isCompleted ? 'completed' : ''}">
+                                ${isCompleted ? '✓' : i + 1}
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">${stageLabels[stage][lang === 'ur' ? 'ur' : 'en']}</div>
+                                <div class="timeline-description">${isCompleted ? 'Completed' : 'Pending'}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                statusHTML += '</div>';
+
+                let itemsHTML = '<div class="order-items">';
+                order.summary.items.forEach(item => {
+                    itemsHTML += `
+                        <div class="order-item">
+                            <div>
+                                <div class="item-name">${item.name}</div>
+                                <div class="item-qty">Qty: ${item.quantity}</div>
+                            </div>
+                            <div class="item-price">${currency} ${(item.price * item.quantity).toFixed(2)}</div>
+                        </div>
+                    `;
+                });
+                itemsHTML += '</div>';
+
+                const statusClass = `status-${statusStages[currentStageIndex]}`;
+                const statusText = statusStages[currentStageIndex].charAt(0).toUpperCase() + statusStages[currentStageIndex].slice(1);
+
+                const orderHTML = `
+                    <div class="order-card">
+                        <div class="order-header">
+                            <div>
+                                <div class="order-id">${order.id}</div>
+                                <div class="order-date">${orderDate}</div>
+                            </div>
+                            <div class="order-status ${statusClass}">${statusText}</div>
+                        </div>
+
+                        ${statusHTML}
+
+                        ${itemsHTML}
+
+                        <div class="order-total">
+                            <span>Total:</span>
+                            <span>${currency} ${order.summary.total.toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
+
+                ordersContainer.innerHTML += orderHTML;
+            });
+        }
+
+        function updateCartCount() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let count = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cartCount').textContent = count;
+        }
+
+        loadOrders();
+        updateCartCount();
+
+        // Auto-update order status every 5 seconds
+        setInterval(() => {
+            let orders = JSON.parse(localStorage.getItem('orders')) || [];
+            orders.forEach(order => {
+                if (!order.stage) order.stage = 0;
+                // Simulate auto-progression (remove this in production)
+                if (order.stage < 3 && Math.random() > 0.8) {
+                    order.stage++;
+                }
+            });
+            localStorage.setItem('orders', JSON.stringify(orders));
+            loadOrders();
+        }, 5000);
+    </script>
+</body>
+</html>

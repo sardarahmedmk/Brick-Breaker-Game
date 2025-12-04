@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ translations.get('shopping_cart', 'Shopping Cart') }} - E-Commerce Store</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">{{ translations.get('store_name', 'E-Store') }}</div>
+            <div class="nav-center">
+                <a href="/?lang={{ lang }}&currency={{ currency }}">{{ translations.get('home', 'Home') }}</a>
+                <a href="/?lang={{ lang }}&currency={{ currency }}#products">{{ translations.get('products', 'Products') }}</a>
+                <a href="/cart?lang={{ lang }}&currency={{ currency }}">{{ translations.get('cart', 'Cart') }}</a>
+                <a href="/orders?lang={{ lang }}&currency={{ currency }}">{{ translations.get('my_orders', 'My Orders') }}</a>
+            </div>
+            <div class="nav-right">
+                <select id="langSelect" onchange="changeLanguage(this.value)">
+                    <option value="en" {% if lang == 'en' %}selected="selected"{% endif %}>English</option>
+                    <option value="ur" {% if lang == 'ur' %}selected="selected"{% endif %}>اردو</option>
+                </select>
+                <select id="currencySelect" onchange="changeCurrency(this.value)">
+                    <option value="USD" {% if currency == 'USD' %}selected="selected"{% endif %}>USD</option>
+                    <option value="EUR" {% if currency == 'EUR' %}selected="selected"{% endif %}>EUR</option>
+                    <option value="GBP" {% if currency == 'GBP' %}selected="selected"{% endif %}>GBP</option>
+                    <option value="PKR" {% if currency == 'PKR' %}selected="selected"{% endif %}>PKR</option>
+                    <option value="INR" {% if currency == 'INR' %}selected="selected"{% endif %}>INR</option>
+                </select>
+                <a href="/cart?lang={{ lang }}&currency={{ currency }}" class="cart-icon">🛒 <span id="cartCount">0</span></a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1>{{ translations.get('shopping_cart', 'Shopping Cart') }}</h1>
+
+        <div class="cart-container">
+            <div class="cart-items">
+                <table class="cart-table">
+                    <thead>
+                        <tr>
+                            <th>{{ translations.get('product', 'Product') }}</th>
+                            <th>{{ translations.get('price', 'Price') }}</th>
+                            <th>{{ translations.get('quantity', 'Quantity') }}</th>
+                            <th>{{ translations.get('subtotal', 'Subtotal') }}</th>
+                            <th>{{ translations.get('action', 'Action') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cartBody">
+                        <!-- Items will be added here by JavaScript -->
+                    </tbody>
+                </table>
+                <div id="emptyCart" class="empty-cart">
+                    <p>{{ translations.get('cart_empty', 'Your cart is empty') }}</p>
+                    <a href="/?lang={{ lang }}&currency={{ currency }}" class="btn-continue">
+                        {{ translations.get('continue_shopping', 'Continue Shopping') }}
+                    </a>
+                </div>
+            </div>
+
+            <div class="cart-summary">
+                <h2>{{ translations.get('order_summary', 'Order Summary') }}</h2>
+                <div class="summary-items">
+                    <div class="summary-row">
+                        <span>{{ translations.get('subtotal', 'Subtotal') }}:</span>
+                        <span id="subtotal">{{ currency }} 0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>{{ translations.get('shipping', 'Shipping') }}:</span>
+                        <span id="shipping">{{ currency }} 0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>{{ translations.get('tax', 'Tax') }}:</span>
+                        <span id="tax">{{ currency }} 0.00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>{{ translations.get('total', 'Total') }}:</span>
+                        <span id="total">{{ currency }} 0.00</span>
+                    </div>
+                </div>
+                <button class="btn-checkout" onclick="goToCheckout()">
+                    {{ translations.get('proceed_checkout', 'Proceed to Checkout') }}
+                </button>
+                <a href="/?lang={{ lang }}&currency={{ currency }}" class="btn-continue">
+                    {{ translations.get('continue_shopping', 'Continue Shopping') }}
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 E-Commerce Store. {{ translations.get('all_rights', 'All Rights Reserved') }}</p>
+        </div>
+    </footer>
+
+    <script>
+        const currency = '{{ currency }}';
+        
+        function changeLanguage(lang) {
+            window.location.href = `/cart?lang=${lang}&currency=${currency}`;
+        }
+
+        function changeCurrency(curr) {
+            window.location.href = `/cart?lang={{ lang }}&currency=${curr}`;
+        }
+
+        function loadCart() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const cartBody = document.getElementById('cartBody');
+            const emptyCart = document.getElementById('emptyCart');
+            
+            if (cart.length === 0) {
+                cartBody.parentElement.style.display = 'none';
+                emptyCart.style.display = 'block';
+                return;
+            }
+            
+            cartBody.innerHTML = '';
+            let subtotal = 0;
+            
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                subtotal += itemTotal;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${currency} ${item.price.toFixed(2)}</td>
+                    <td>
+                        <input type="number" value="${item.quantity}" min="1" 
+                               onchange="updateQuantity(${item.id}, this.value)">
+                    </td>
+                    <td>${currency} ${itemTotal.toFixed(2)}</td>
+                    <td><button class="btn-remove" onclick="removeFromCart(${item.id})">{{ translations.get('remove', 'Remove') }}</button></td>
+                `;
+                cartBody.appendChild(row);
+            });
+            
+            calculateTotals(subtotal);
+        }
+
+        function calculateTotals(subtotal) {
+            const shipping = subtotal > 100 ? 0 : 10;
+            const tax = subtotal * 0.1;
+            const total = subtotal + shipping + tax;
+            
+            document.getElementById('subtotal').textContent = `${currency} ${subtotal.toFixed(2)}`;
+            document.getElementById('shipping').textContent = `${currency} ${shipping.toFixed(2)}`;
+            document.getElementById('tax').textContent = `${currency} ${tax.toFixed(2)}`;
+            document.getElementById('total').textContent = `${currency} ${total.toFixed(2)}`;
+        }
+
+        function updateQuantity(id, quantity) {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let item = cart.find(p => p.id === id);
+            if (item) {
+                item.quantity = parseInt(quantity);
+                if (item.quantity <= 0) {
+                    cart = cart.filter(p => p.id !== id);
+                }
+                localStorage.setItem('cart', JSON.stringify(cart));
+                loadCart();
+                updateCartCount();
+            }
+        }
+
+        function removeFromCart(id) {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            cart = cart.filter(p => p.id !== id);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            loadCart();
+            updateCartCount();
+        }
+
+        function updateCartCount() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let count = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cartCount').textContent = count;
+        }
+
+        function goToCheckout() {
+            window.location.href = `/checkout?lang={{ lang }}&currency=${currency}`;
+        }
+
+        loadCart();
+        updateCartCount();
+    </script>
+</body>
+</html>
